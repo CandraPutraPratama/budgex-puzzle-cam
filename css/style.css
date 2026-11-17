@@ -393,6 +393,75 @@ html, body {
   transform: scale(1.08);
 }
 
+/* Mid-round pause when the hand is lost. The blur also hides the board,
+   so dropping the hand can't be used to study the puzzle with the clock stopped.
+   Sits under #fx-canvas so the hand cursor shows the moment the hand is back. */
+.pause-panel {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  pointer-events: none;
+  background: rgba(9, 17, 14, 0.6);
+  backdrop-filter: blur(14px);
+}
+
+.pause-card {
+  width: min(560px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  background: rgba(9, 17, 14, 0.85);
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  color: #facc15;
+}
+
+.pause-title {
+  font-size: clamp(28px, 3.6vw, 42px);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #f4f7f5;
+}
+
+.pause-sub {
+  max-width: 40ch;
+  font-size: clamp(16px, 1.5vw, 20px);
+  line-height: 1.45;
+  color: #d5e0db;
+  text-wrap: balance;
+}
+
+.pause-note {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #facc15;
+}
+
+.pause-card svg {
+  animation: pause-wave 1.6s ease-in-out infinite;
+}
+
+@keyframes pause-wave {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-14deg); }
+  75%      { transform: rotate(14deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pause-card svg {
+    animation: none;
+  }
+}
+
 .countdown {
   position: fixed;
   inset: 0;

@@ -65,6 +65,9 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
   lalu geser ke kotaknya di papan tengah. Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
   Kalau 3 jari lain ikut mengepal, pelacak gampang salah mengira jari tengah/manis sebagai telunjuk.
 - Lingkaran kursor mengikuti **ujung jempol**, jadi arahkan jempol ke potongan yang mau diambil.
+- **Tangan hilang dari kamera** lebih dari 1,5 detik saat main: game **jeda otomatis**, timer berhenti, layar diburamkan,
+  dan muncul kartu *"Tangan tidak terlihat, dekatkan tanganmu ke kamera"*. Begitu tangan terlihat lagi (atau layar diklik),
+  game lanjut sendiri. Pemain yang pakai mouse/touch tidak pernah dijeda. Lamanya diatur di `HAND_PAUSE_MS` (`js/app.js`).
 - **10 detik terakhir**: layar berdenyut merah tiap detik, makin lama makin tebal.
 - **Menang**: confetti, papan berkilau, musik fanfare, lalu kartu "Kamu Menang!". Tunjukkan ke penjaga booth untuk klaim stiker.
 - **Pengunjung berikutnya**: klik **Main Lagi** atau tekan `R`.

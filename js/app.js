@@ -76,6 +76,14 @@
   const startPanel = document.getElementById("start-panel");
   const startHint = document.getElementById("start-hint");
   const startHintText = document.getElementById("start-hint-text");
+  const pausePanel = document.getElementById("pause-panel");
+
+  // Mid-round, if the camera loses the player's hand for this long, the timer
+  // stops and a card asks them to bring the hand closer. It resumes by itself
+  // as soon as the hand is back (or on a mouse/touch press).
+  const HAND_PAUSE_MS = 1500;
+  let paused = false;
+  let lastInput = null; // "hand" | "pointer": a mouse/touch player is never paused
 
   // Big hint on the start card, so visitors know whether to wait or play.
   // "camera" -> "loading" -> "ready" ("hand" while a hand is seen), or "nocam"/"error".
@@ -413,6 +421,31 @@
   function startTimer() {
     if (timerStarted || gameOver) return;
     timerStarted = true;
+    runTimer();
+  }
+
+  function setPaused(on) {
+    if (paused === on) return;
+    paused = on;
+    pausePanel.hidden = !on;
+    if (on) {
+      clearInterval(timerInterval);
+      playTone(330, 0.2, "triangle");
+    } else {
+      // A fresh interval gives back the part-second that was running at pause.
+      runTimer();
+      playTone(660, 0.12, "triangle");
+    }
+  }
+
+  function updateAutoPause(now) {
+    const handLost =
+      timerStarted && !gameOver && trackerState === "ready" && lastInput === "hand" && now - lastHandSeen > HAND_PAUSE_MS;
+    setPaused(handLost);
+  }
+
+  function runTimer() {
+    clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       if (gameOver) return;
       timeLeft = Math.max(0, timeLeft - 1);
@@ -438,6 +471,8 @@
     timeLeft = duration;
     timerStarted = false;
     gameOver = false;
+    paused = false;
+    pausePanel.hidden = true;
     activePiece = null;
     inputSource = null;
     confetti = [];
@@ -578,6 +613,8 @@
   function endGame(won) {
     gameOver = true;
     clearInterval(timerInterval);
+    paused = false;
+    pausePanel.hidden = true;
     activePiece = null;
 
     const total = pieces.length;
@@ -902,6 +939,7 @@
       smoothedCursor.y += (cursorTarget.y - smoothedCursor.y) * k;
       if (inputSource === "hand") moveActivePiece(smoothedCursor.x, smoothedCursor.y);
     }
+    updateAutoPause(now);
     if (!startPanel.hidden) {
       updateStartHint();
       btnStart.classList.toggle("hand-hover", smoothedCursor.active && isOverStartButton(smoothedCursor.x, smoothedCursor.y));
@@ -922,6 +960,7 @@
   window.addEventListener("pointerdown", getAudio);
 
   canvas.addEventListener("pointerdown", (e) => {
+    lastInput = "pointer";
     canvas.setPointerCapture(e.pointerId);
     tryGrabAt(e.clientX, e.clientY, "pointer");
   });
@@ -959,7 +998,10 @@
     durationSelect.blur();
   });
 
-  btnStart.addEventListener("click", startCountdown);
+  btnStart.addEventListener("click", () => {
+    lastInput = "pointer";
+    startCountdown();
+  });
   btnReset.addEventListener("click", () => initBoard());
   btnPlayAgain.addEventListener("click", () => initBoard());
 
@@ -1081,6 +1123,7 @@
       if (player.switched) dropHand();
       lockedWrist = { x: lm[LM_WRIST].x, y: lm[LM_WRIST].y };
       lastHandSeen = now;
+      lastInput = "hand";
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
