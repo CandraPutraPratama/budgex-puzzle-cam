@@ -1,0 +1,19 @@
+/* Local copies of the Google Fonts used by the game, so it works offline.
+   Both are variable fonts (latin subset), one file covers every weight.
+   License: SIL Open Font License 1.1. */
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("jetbrains-mono-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url("plus-jakarta-sans-latin.woff2") format("woff2");
+}
