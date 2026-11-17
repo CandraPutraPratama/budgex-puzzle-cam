@@ -187,10 +187,23 @@ html, body {
   display: none !important;
 }
 
-/* Dark scheme keeps the opened option list readable on the dark HUD. */
 .duration-select {
   color-scheme: dark;
   flex-shrink: 0;
+}
+
+/* Windows Chrome draws the opened list on white and ignores color-scheme,
+   so the light HUD text vanished. Give the options their own colors. */
+.duration-select option {
+  background-color: #10211b;
+  color: #f4f7f5;
+}
+
+/* Chrome shows :focus-visible on a select even after a mouse click, which left
+   a gold frame around it. A lighter border still marks keyboard focus. */
+.duration-select:focus-visible {
+  outline: none;
+  border-color: rgba(244, 247, 245, 0.6);
 }
 
 .btn-large {
