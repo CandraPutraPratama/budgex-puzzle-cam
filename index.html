@@ -101,13 +101,17 @@
         <span>Cubit (jempol + telunjuk) tombol Mulai, lalu cubit potongan dan geser ke papan tengah!</span>
       </div>
 
-      <!-- Start button: click/tap it, or pinch it with the hand -->
-      <button type="button" id="btn-start" class="btn btn-primary start-button">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <polygon points="6 3 20 12 6 21 6 3" />
-        </svg>
-        <span>Mulai</span>
-      </button>
+      <!-- Title + start button: click/tap it, or pinch it with the hand -->
+      <div id="start-panel" class="start-panel">
+        <h1 class="start-title">Bisa Selesai dalam <span id="start-duration" class="start-duration">90 Detik</span>?</h1>
+        <p class="start-sub">Tanpa sentuh layar, cukup cubit pakai jarimu. Menang dapat stiker maskot!</p>
+        <button type="button" id="btn-start" class="btn btn-primary start-button">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <polygon points="6 3 20 12 6 21 6 3" />
+          </svg>
+          <span>Mulai</span>
+        </button>
+      </div>
 
       <!-- 3-2-1-Mulai! countdown -->
       <div id="countdown" class="countdown hidden" aria-live="assertive">

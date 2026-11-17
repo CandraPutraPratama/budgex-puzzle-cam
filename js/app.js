@@ -60,6 +60,8 @@
   const countdownText = document.getElementById("countdown-text");
   const dangerVignette = document.getElementById("danger-vignette");
   const btnStart = document.getElementById("btn-start");
+  const startPanel = document.getElementById("start-panel");
+  const startDuration = document.getElementById("start-duration");
   const DANGER_FROM_SECONDS = 10;
 
   const COUNTDOWN_STEP_MS = 1000;
@@ -311,7 +313,7 @@
   function startCountdown() {
     if (countdownState !== "idle" || gameOver) return;
     countdownState = "running";
-    btnStart.hidden = true;
+    startPanel.hidden = true;
     btnStart.classList.remove("hand-hover");
     const steps = ["3", "2", "1", "Mulai!"];
     steps.forEach((label, i) => {
@@ -402,7 +404,9 @@
     inputSource = null;
     confetti = [];
     modal.classList.add("hidden");
-    btnStart.hidden = false;
+    startPanel.hidden = false;
+    // "90 detik" -> "90 Detik", "2,5 menit" -> "2,5 Menit": follows the Durasi dropdown.
+    startDuration.textContent = durationSelect.selectedOptions[0].textContent.replace(/(^|\s)\S/g, (ch) => ch.toUpperCase());
     gridLabel.textContent = mode.label;
 
     const vw = window.innerWidth;
@@ -486,7 +490,7 @@
   }
 
   function isOverStartButton(x, y) {
-    if (btnStart.hidden) return false;
+    if (startPanel.hidden) return false;
     const r = btnStart.getBoundingClientRect();
     const pad = GRAB_PADDING;
     return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
@@ -813,7 +817,7 @@
       smoothedCursor.y += (cursorTarget.y - smoothedCursor.y) * k;
       if (inputSource === "hand") moveActivePiece(smoothedCursor.x, smoothedCursor.y);
     }
-    if (!btnStart.hidden) {
+    if (!startPanel.hidden) {
       btnStart.classList.toggle("hand-hover", smoothedCursor.active && isOverStartButton(smoothedCursor.x, smoothedCursor.y));
     }
 

@@ -281,12 +281,50 @@ html, body {
   100% { opacity: var(--rest); }
 }
 
-.start-button {
+/* Centered over the board until the round starts. Only the button takes clicks. */
+.start-panel {
   position: absolute;
   left: 50%;
   top: 50%;
   z-index: 20;
   transform: translate(-50%, -50%);
+  width: min(620px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 32px 32px;
+  border-radius: var(--radius-lg);
+  background: rgba(9, 17, 14, 0.82);
+  border: 1px solid var(--border-subtle);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  pointer-events: none;
+}
+
+.start-title {
+  font-size: clamp(28px, 3.6vw, 44px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.start-duration {
+  color: #facc15;
+}
+
+.start-sub {
+  max-width: 44ch;
+  font-size: clamp(15px, 1.4vw, 18px);
+  line-height: 1.45;
+  color: #d5e0db;
+  text-wrap: balance;
+}
+
+.start-button {
+  margin-top: 6px;
+  pointer-events: auto;
   min-height: 84px;
   padding: 0 48px;
   gap: 14px;
@@ -299,7 +337,7 @@ html, body {
 /* The hand cursor is over the button: grow it so the visitor knows a pinch will press it. */
 .start-button.hand-hover {
   background: var(--accent-emerald-hover);
-  transform: translate(-50%, -50%) scale(1.08);
+  transform: scale(1.08);
 }
 
 .countdown {
