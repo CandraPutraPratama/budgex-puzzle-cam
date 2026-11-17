@@ -57,8 +57,10 @@ Tips cahaya: taruh HP di atas/dekat layar menghadap pengunjung, dan hindari jend
 tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pameran.
 
 ## Cara Main
-- **Angkat tangan ke kamera** → muncul hitung mundur **3-2-1-Mulai!**, lalu timer berjalan
-  (bawaan `90 detik`; ganti lewat dropdown **Durasi** di bar atas, 30 detik sampai 5 menit, dan pilihannya diingat browser). Tanpa kamera, klik layar sekali untuk mulai.
+- **Tekan tombol Mulai** di tengah layar: cubit tombolnya pakai tangan di depan kamera (tombolnya membesar
+  kalau kursor tangan sudah di atasnya), atau klik / sentuh. Game tidak mulai sendiri walaupun ada tangan terlihat.
+- Muncul hitung mundur **3-2-1-Mulai!**, lalu timer berjalan
+  (bawaan `90 detik`; ganti lewat dropdown **Durasi** di bar atas, 30 detik sampai 5 menit, dan pilihannya diingat browser).
 - **Cubit (jempol + telunjuk)** potongan puzzle, geser ke kotaknya di papan tengah.
   Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
 - **10 detik terakhir**: layar berdenyut merah tiap detik, makin lama makin tebal.
@@ -89,3 +91,6 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 - Pilihan durasi di dropdown: daftar `<option>` di `#duration-select` (`index.html`). Bawaan: `DEFAULT_DURATION` di `js/app.js`.
 - Kepekaan cubitan: `PINCH_ON` (makin besar = makin gampang ambil) dan `PINCH_OFF` (makin besar = makin susah lepas).
 - Mulai merah peringatan: `DANGER_FROM_SECONDS`.
+- Tangan hilang-hilangan: `LOST_HAND_GRACE_MS` (berapa lama kursor bertahan saat tangan sesaat tidak terdeteksi),
+  serta `minDetectionConfidence` / `minTrackingConfidence` di `hands.setOptions` (makin kecil = makin gampang terdeteksi,
+  tapi bisa salah deteksi).

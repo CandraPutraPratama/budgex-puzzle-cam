@@ -281,6 +281,27 @@ html, body {
   100% { opacity: var(--rest); }
 }
 
+.start-button {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 20;
+  transform: translate(-50%, -50%);
+  min-height: 84px;
+  padding: 0 48px;
+  gap: 14px;
+  border-radius: var(--radius-lg);
+  font-size: 30px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+
+/* The hand cursor is over the button: grow it so the visitor knows a pinch will press it. */
+.start-button.hand-hover {
+  background: var(--accent-emerald-hover);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
 .countdown {
   position: fixed;
   inset: 0;

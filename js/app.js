@@ -31,7 +31,9 @@
   const PINCH_ON = 0.32;
   const PINCH_OFF = 0.5;
   const RELEASE_HOLD_MS = 150;
-  const LOST_HAND_GRACE_MS = 400;
+  // How long a hand may vanish (blur, backlight, pinch hiding the fingers)
+  // before the cursor is removed and a held piece is dropped.
+  const LOST_HAND_GRACE_MS = 800;
   const GRAB_PADDING = 14;
 
   const videoEl = document.getElementById("webcam");
@@ -57,6 +59,7 @@
   const countdownEl = document.getElementById("countdown");
   const countdownText = document.getElementById("countdown-text");
   const dangerVignette = document.getElementById("danger-vignette");
+  const btnStart = document.getElementById("btn-start");
   const DANGER_FROM_SECONDS = 10;
 
   const COUNTDOWN_STEP_MS = 1000;
@@ -308,6 +311,8 @@
   function startCountdown() {
     if (countdownState !== "idle" || gameOver) return;
     countdownState = "running";
+    btnStart.hidden = true;
+    btnStart.classList.remove("hand-hover");
     const steps = ["3", "2", "1", "Mulai!"];
     steps.forEach((label, i) => {
       countdownTimers.push(setTimeout(() => showCountdownStep(label, i === steps.length - 1), i * COUNTDOWN_STEP_MS));
@@ -397,6 +402,7 @@
     inputSource = null;
     confetti = [];
     modal.classList.add("hidden");
+    btnStart.hidden = false;
     gridLabel.textContent = mode.label;
 
     const vw = window.innerWidth;
@@ -456,10 +462,10 @@
 
   function tryGrabAt(x, y, source) {
     if (gameOver || activePiece) return;
-    // Nothing can be grabbed before "Mulai!". A first click starts the countdown
-    // (the hand starts it in onResults as soon as it is seen).
+    // Nothing can be grabbed before "Mulai!". The round only starts from the
+    // Mulai button: clicked, or pinched by the hand (checked here).
     if (countdownState !== "done") {
-      startCountdown();
+      if (source === "hand" && isOverStartButton(x, y)) startCountdown();
       return;
     }
     for (let i = pieces.length - 1; i >= 0; i--) {
@@ -477,6 +483,13 @@
         break;
       }
     }
+  }
+
+  function isOverStartButton(x, y) {
+    if (btnStart.hidden) return false;
+    const r = btnStart.getBoundingClientRect();
+    const pad = GRAB_PADDING;
+    return x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad;
   }
 
   function moveActivePiece(x, y) {
@@ -800,6 +813,9 @@
       smoothedCursor.y += (cursorTarget.y - smoothedCursor.y) * k;
       if (inputSource === "hand") moveActivePiece(smoothedCursor.x, smoothedCursor.y);
     }
+    if (!btnStart.hidden) {
+      btnStart.classList.toggle("hand-hover", smoothedCursor.active && isOverStartButton(smoothedCursor.x, smoothedCursor.y));
+    }
 
     ctx.clearRect(0, 0, vw, vh);
     drawBoardFrame();
@@ -853,6 +869,7 @@
     durationSelect.blur();
   });
 
+  btnStart.addEventListener("click", startCountdown);
   btnReset.addEventListener("click", () => initBoard());
   btnPlayAgain.addEventListener("click", () => initBoard());
 
@@ -947,8 +964,10 @@
       maxNumHands: 1,
       // Lite model: much faster, and accurate enough for a pinch.
       modelComplexity: 0,
-      minDetectionConfidence: 0.6,
-      minTrackingConfidence: 0.5
+      // Lower thresholds: finds the hand again sooner in dim/backlit booths and
+      // keeps following it through a pinch instead of re-searching the frame.
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.35
     });
 
     hands.onResults((results) => {
@@ -958,8 +977,6 @@
       const lm = results.multiHandLandmarks[0];
       const now = performance.now();
       lastHandSeen = now;
-      // First time a hand shows up this round: start 3-2-1.
-      if (countdownState === "idle" && !gameOver) startCountdown();
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
