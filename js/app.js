@@ -656,6 +656,11 @@
     const cellW = boardRect.w / cols;
     const cellH = boardRect.h / rows;
 
+    // The camera is shown in natural color, so only the board gets a dark
+    // backing to keep the ghost picture and grid readable.
+    ctx.fillStyle = "rgba(9, 17, 14, 0.45)";
+    ctx.fillRect(boardRect.x, boardRect.y, boardRect.w, boardRect.h);
+
     if (pieceSheet) {
       ctx.save();
       ctx.globalAlpha = 0.22;

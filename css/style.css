@@ -202,7 +202,6 @@ html, body {
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1);
-  filter: grayscale(75%) brightness(0.62);
   z-index: 0;
 }
 
