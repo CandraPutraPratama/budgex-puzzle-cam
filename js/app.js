@@ -962,8 +962,10 @@
 
     hands.setOptions({
       maxNumHands: 1,
-      // Lite model: much faster, and accurate enough for a pinch.
-      modelComplexity: 0,
+      // Full model (vendor/.../hand_landmark_full.tflite): steadier fingertips and
+      // fewer dropouts than lite, at more CPU per frame. Set 0 to go back to lite
+      // if a slow laptop starts to lag.
+      modelComplexity: 1,
       // Lower thresholds: finds the hand again sooner in dim/backlit booths and
       // keeps following it through a pinch instead of re-searching the frame.
       minDetectionConfidence: 0.5,

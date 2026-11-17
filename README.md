@@ -94,3 +94,5 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 - Tangan hilang-hilangan: `LOST_HAND_GRACE_MS` (berapa lama kursor bertahan saat tangan sesaat tidak terdeteksi),
   serta `minDetectionConfidence` / `minTrackingConfidence` di `hands.setOptions` (makin kecil = makin gampang terdeteksi,
   tapi bisa salah deteksi).
+- Model pelacak tangan: `modelComplexity` di `hands.setOptions`. `1` = model **full** (bawaan, lebih akurat & jarang hilang),
+  `0` = model **lite** (lebih ringan). Kalau laptop booth terasa patah-patah, ganti ke `0`.
