@@ -58,7 +58,7 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 
 ## Cara Main
 - **Angkat tangan ke kamera** → muncul hitung mundur **3-2-1-Mulai!**, lalu timer berjalan
-  (`45 detik` untuk mode `4×3`, `50 detik` untuk mode `4×4`). Tanpa kamera, klik layar sekali untuk mulai.
+  (`90 detik`, baik mode `4×3` maupun `4×4`). Tanpa kamera, klik layar sekali untuk mulai.
 - **Cubit (jempol + telunjuk)** potongan puzzle, geser ke kotaknya di papan tengah.
   Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
 - **10 detik terakhir**: layar berdenyut merah tiap detik, makin lama makin tebal.
@@ -76,7 +76,7 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 - `serve.py` — Server lokal (tanpa cache)
 - `index.html` — Halaman utama aplikasi kiosk
 - `css/style.css` — Tampilan, animasi hitung mundur, merah peringatan, kartu menang
-- `js/app.js` — Logika game, timer (45d / 50d), deteksi cubitan tangan, suara & confetti
+- `js/app.js` — Logika game, timer (90 detik), deteksi cubitan tangan, suara & confetti
 - `assets/puzzle-mascot.jpg` — Gambar puzzle maskot BudgEx
 - `assets/logo-budgex.png` — Logo BudgEx (pojok kiri atas & ikon tab)
 - `vendor/mediapipe-hands/` — Pelacak tangan MediaPipe Hands v0.4.1675469240 (offline, lisensi Apache-2.0)

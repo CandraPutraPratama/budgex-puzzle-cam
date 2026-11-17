@@ -1,7 +1,7 @@
 (() => {
   const MODES = [
-    { cols: 4, rows: 3, duration: 45, label: "4×3 (45d)" },
-    { cols: 4, rows: 4, duration: 50, label: "4×4 (50d)" }
+    { cols: 4, rows: 3, duration: 90, label: "4×3 (90d)" },
+    { cols: 4, rows: 4, duration: 90, label: "4×4 (90d)" }
   ];
 
   // MediaPipe landmark indices. The model always sees the whole hand,
