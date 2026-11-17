@@ -605,12 +605,14 @@
     }, 700);
   }
 
-  function updateAndDrawConfetti(vw, vh, dt) {
+  // The top layer holds confetti and the hand cursor, so the cursor stays
+  // visible over the start card and the result modal.
+  function updateAndDrawConfetti(vw, vh, dt, handOn) {
     // Skip clearing the full-screen effects layer when nothing is on it.
-    if (!confetti.length && !fxHasContent) return;
+    if (!confetti.length && !fxHasContent && !handOn) return;
     fxCtx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
     fxCtx.clearRect(0, 0, vw, vh);
-    fxHasContent = confetti.length > 0;
+    fxHasContent = confetti.length > 0 || handOn;
 
     const step = dt * 60;
     const drag = Math.pow(0.985, step);
@@ -765,26 +767,26 @@
     const color = isPinching ? "#22c55e" : "#facc15";
     const { thumb, index } = fingerTips;
 
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(thumb.x, thumb.y);
-    ctx.lineTo(index.x, index.y);
-    ctx.stroke();
+    fxCtx.save();
+    fxCtx.strokeStyle = color;
+    fxCtx.lineWidth = 2.5;
+    fxCtx.beginPath();
+    fxCtx.moveTo(thumb.x, thumb.y);
+    fxCtx.lineTo(index.x, index.y);
+    fxCtx.stroke();
 
-    ctx.fillStyle = color;
+    fxCtx.fillStyle = color;
     [thumb, index].forEach((pt) => {
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
-      ctx.fill();
+      fxCtx.beginPath();
+      fxCtx.arc(pt.x, pt.y, 7, 0, Math.PI * 2);
+      fxCtx.fill();
     });
 
-    ctx.beginPath();
-    ctx.arc(smoothedCursor.x, smoothedCursor.y, isPinching ? 14 : 20, 0, Math.PI * 2);
-    ctx.lineWidth = 3.5;
-    ctx.stroke();
-    ctx.restore();
+    fxCtx.beginPath();
+    fxCtx.arc(smoothedCursor.x, smoothedCursor.y, isPinching ? 14 : 20, 0, Math.PI * 2);
+    fxCtx.lineWidth = 3.5;
+    fxCtx.stroke();
+    fxCtx.restore();
   }
 
   function dropHand() {
@@ -825,9 +827,9 @@
     drawBoardFrame();
     drawPieces();
     drawWinEffects(now);
-    drawHandOverlay();
 
-    updateAndDrawConfetti(vw, vh, dt);
+    updateAndDrawConfetti(vw, vh, dt, smoothedCursor.active && !!fingerTips);
+    drawHandOverlay();
 
     requestAnimationFrame(renderLoop);
   }
@@ -1022,6 +1024,12 @@
       }
     });
 
+    // The model takes a few seconds to load; say so instead of "ready".
+    const cameraLabel = () => videoEl.srcObject?.getVideoTracks()[0]?.label || "Kamera";
+    statusEl.textContent = `${cameraLabel()} • Memuat pelacak tangan...`;
+    let trackerReady = false;
+    let usingFullModel = true;
+
     let busy = false;
     const scheduleNext = () => {
       if (videoEl.requestVideoFrameCallback) {
@@ -1038,7 +1046,22 @@
         busy = true;
         try {
           await hands.send({ image: videoEl });
-        } catch (_) {}
+          if (!trackerReady) {
+            trackerReady = true;
+            statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model ${usingFullModel ? "full" : "lite"})`;
+          }
+        } catch (err) {
+          console.error("Hand tracker failed:", err);
+          if (usingFullModel) {
+            // Full model can't run here (memory, slow device...): fall back to lite.
+            usingFullModel = false;
+            trackerReady = false;
+            statusEl.textContent = `${cameraLabel()} • Model full gagal, pindah ke model lite...`;
+            hands.setOptions({ modelComplexity: 0 });
+          } else {
+            statusEl.textContent = "Pelacak tangan error • Mode Sentuh/Mouse aktif (lihat Console, F12)";
+          }
+        }
         busy = false;
       }
       scheduleNext();
