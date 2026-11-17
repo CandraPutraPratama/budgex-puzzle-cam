@@ -61,6 +61,27 @@
   const dangerVignette = document.getElementById("danger-vignette");
   const btnStart = document.getElementById("btn-start");
   const startPanel = document.getElementById("start-panel");
+  const startHint = document.getElementById("start-hint");
+  const startHintText = document.getElementById("start-hint-text");
+
+  // Big hint on the start card, so visitors know whether to wait or play.
+  // "camera" -> "loading" -> "ready" ("hand" while a hand is seen), or "nocam"/"error".
+  let trackerState = "camera";
+  const HINTS = {
+    camera: "Menyiapkan kamera...",
+    loading: "Memuat pelacak tangan... tunggu sebentar",
+    ready: "Siap! Angkat tanganmu ke kamera",
+    hand: "Tangan terdeteksi! Arahkan lingkaran kuning ke Mulai, lalu cubit",
+    nocam: "Kamera tidak tersedia. Klik Mulai untuk main pakai mouse/sentuh",
+    error: "Pelacak tangan bermasalah. Klik Mulai untuk main pakai mouse/sentuh"
+  };
+
+  function updateStartHint() {
+    const state = trackerState === "ready" && smoothedCursor.active ? "hand" : trackerState;
+    if (startHint.dataset.state === state) return;
+    startHint.dataset.state = state;
+    startHintText.textContent = HINTS[state];
+  }
   const startDuration = document.getElementById("start-duration");
   const DANGER_FROM_SECONDS = 10;
 
@@ -820,6 +841,7 @@
       if (inputSource === "hand") moveActivePiece(smoothedCursor.x, smoothedCursor.y);
     }
     if (!startPanel.hidden) {
+      updateStartHint();
       btnStart.classList.toggle("hand-hover", smoothedCursor.active && isOverStartButton(smoothedCursor.x, smoothedCursor.y));
     }
 
@@ -952,11 +974,13 @@
     try {
       await openCamera(savedCameraId());
     } catch (err) {
+      trackerState = "nocam";
       statusEl.textContent = "Kamera tidak tersedia • Mode Sentuh/Mouse aktif";
       return;
     }
 
     if (typeof Hands === "undefined") {
+      trackerState = "nocam";
       statusEl.textContent = "Kamera aktif • Gunakan Sentuh/Mouse";
       return;
     }
@@ -1026,6 +1050,7 @@
 
     // The model takes a few seconds to load; say so instead of "ready".
     const cameraLabel = () => videoEl.srcObject?.getVideoTracks()[0]?.label || "Kamera";
+    trackerState = "loading";
     statusEl.textContent = `${cameraLabel()} • Memuat pelacak tangan...`;
     let trackerReady = false;
     let usingFullModel = true;
@@ -1077,6 +1102,7 @@
           if (trackerReady && lastHandSeen >= t0) checkTrackerSpeed(sendMs);
           if (!trackerReady) {
             trackerReady = true;
+            trackerState = "ready";
             statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model ${usingFullModel ? "full" : "lite"})`;
           }
         } catch (err) {
@@ -1086,9 +1112,11 @@
             usingFullModel = false;
             trackerReady = false;
             window.__tracker.model = "lite";
+            trackerState = "loading";
             statusEl.textContent = `${cameraLabel()} • Model full gagal, pindah ke model lite...`;
             hands.setOptions({ modelComplexity: 0 });
           } else {
+            trackerState = "error";
             statusEl.textContent = "Pelacak tangan error • Mode Sentuh/Mouse aktif (lihat Console, F12)";
           }
         }
