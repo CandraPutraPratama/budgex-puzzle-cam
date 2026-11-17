@@ -1030,6 +1030,30 @@
     let trackerReady = false;
     let usingFullModel = true;
 
+    // The full model blocks the page for ~100 ms per frame on an ordinary
+    // laptop (Intel UHD), which makes everything stutter. Time the first frames
+    // that contain a hand and drop to lite if full is too slow on this machine.
+    const SLOW_FRAME_MS = 50;
+    const SPEED_SAMPLES = 30;
+    let handFrameTimes = [];
+    window.__tracker = { model: "full", medianMs: null };
+
+    function checkTrackerSpeed(ms) {
+      if (!usingFullModel || handFrameTimes.length >= SPEED_SAMPLES) return;
+      handFrameTimes.push(ms);
+      if (handFrameTimes.length < SPEED_SAMPLES) return;
+      const sorted = [...handFrameTimes].sort((a, b) => a - b);
+      const median = Math.round(sorted[sorted.length >> 1]);
+      window.__tracker.medianMs = median;
+      console.info(`Hand tracker (full model): ${median} ms per frame`);
+      if (median > SLOW_FRAME_MS) {
+        usingFullModel = false;
+        window.__tracker.model = "lite";
+        hands.setOptions({ modelComplexity: 0 });
+        statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model lite, laptop ini lebih cepat pakai lite)`;
+      }
+    }
+
     let busy = false;
     const scheduleNext = () => {
       if (videoEl.requestVideoFrameCallback) {
@@ -1045,7 +1069,12 @@
       if (!busy && !gameOver && videoEl.readyState >= 2) {
         busy = true;
         try {
+          const t0 = performance.now();
           await hands.send({ image: videoEl });
+          // Only frames with a hand run the landmark model, the part that differs.
+          const sendMs = performance.now() - t0;
+          window.__tracker.avgMs = Math.round((window.__tracker.avgMs || sendMs) * 0.9 + sendMs * 0.1);
+          if (trackerReady && lastHandSeen >= t0) checkTrackerSpeed(sendMs);
           if (!trackerReady) {
             trackerReady = true;
             statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model ${usingFullModel ? "full" : "lite"})`;
@@ -1056,6 +1085,7 @@
             // Full model can't run here (memory, slow device...): fall back to lite.
             usingFullModel = false;
             trackerReady = false;
+            window.__tracker.model = "lite";
             statusEl.textContent = `${cameraLabel()} • Model full gagal, pindah ke model lite...`;
             hands.setOptions({ modelComplexity: 0 });
           } else {
