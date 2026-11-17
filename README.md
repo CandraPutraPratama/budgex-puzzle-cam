@@ -98,5 +98,9 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 - Tangan hilang-hilangan: `LOST_HAND_GRACE_MS` (berapa lama kursor bertahan saat tangan sesaat tidak terdeteksi),
   serta `minDetectionConfidence` / `minTrackingConfidence` di `hands.setOptions` (makin kecil = makin gampang terdeteksi,
   tapi bisa salah deteksi).
+- Tangan orang lain di belakang pemain: pelacak mencari sampai `MAX_HANDS` tangan (bawaan 2), lalu game hanya mengikuti
+  **tangan pemain**, yaitu tangan paling besar (paling dekat kamera), dan tetap di tangan itu selama masih terlihat.
+  Tangan yang telapaknya lebih kecil dari `MIN_PALM_FRAC` × tinggi gambar (orang jauh di belakang) diabaikan.
+  Kalau pemain berdiri jauh dan tangannya tidak terdeteksi, kecilkan `MIN_PALM_FRAC`.
 - Model pelacak tangan: `modelComplexity` di `hands.setOptions`. `1` = model **full** (bawaan, lebih akurat & jarang hilang),
   `0` = model **lite** (lebih ringan). Kalau laptop booth terasa patah-patah, ganti ke `0`.

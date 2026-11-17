@@ -41,6 +41,13 @@
   // ignored until it stays at its new spot for INDEX_JUMP_CONFIRM_MS.
   const INDEX_JUMP = 0.45;
   const INDEX_JUMP_CONFIRM_MS = 200;
+  // The tracker looks for up to 2 hands so a bystander's hand can't take the
+  // only slot. The game then follows one: the player's, i.e. the biggest
+  // (closest to the camera), and stays on it while it's still there.
+  const MAX_HANDS = 2;
+  // Hands with a palm shorter than this share of the frame height belong to
+  // people standing far behind the player and are ignored.
+  const MIN_PALM_FRAC = 0.06;
 
   const videoEl = document.getElementById("webcam");
   const canvas = document.getElementById("game-canvas");
@@ -114,6 +121,7 @@
   // Index tip relative to the thumb tip, in palm lengths (camera pixels).
   let indexRel = null;
   let indexJump = null; // { rel, since }: a leap waiting to be confirmed
+  let lockedWrist = null; // player's wrist last frame (normalized camera coords)
   let lastHandSeen = 0;
   let lastRenderTime = performance.now();
 
@@ -839,6 +847,28 @@
     return indexRel;
   }
 
+  // Picks the player's hand from everything the tracker found: the biggest
+  // hand, except that the game stays on the hand it followed last frame (the
+  // one nearest to it) unless that hand has become clearly smaller.
+  // `switched` is true when it moved from one hand to a different one.
+  function pickPlayerHand(allHands, vidW, vidH) {
+    const hands = allHands
+      .map((lm) => ({
+        lm,
+        palm: Math.hypot((lm[LM_WRIST].x - lm[LM_MIDDLE_MCP].x) * vidW, (lm[LM_WRIST].y - lm[LM_MIDDLE_MCP].y) * vidH)
+      }))
+      .filter((h) => h.palm >= MIN_PALM_FRAC * vidH);
+    if (hands.length === 0) return null;
+
+    const biggest = hands.reduce((a, b) => (b.palm > a.palm ? b : a));
+    if (!lockedWrist || hands.length === 1) return { ...biggest, switched: false };
+
+    const away = (h) => Math.hypot((h.lm[LM_WRIST].x - lockedWrist.x) * vidW, (h.lm[LM_WRIST].y - lockedWrist.y) * vidH);
+    const current = hands.reduce((a, b) => (away(b) < away(a) ? b : a));
+    if (current.palm >= biggest.palm * 0.7) return { ...current, switched: false };
+    return { ...biggest, switched: true };
+  }
+
   function dropHand() {
     fingerTips = null;
     smoothedCursor.active = false;
@@ -846,6 +876,7 @@
     filterY.reset();
     indexRel = null;
     indexJump = null;
+    lockedWrist = null;
     if (isPinching) {
       isPinching = false;
       if (inputSource === "hand") releaseActivePiece();
@@ -1022,23 +1053,33 @@
     });
 
     hands.setOptions({
-      maxNumHands: 1,
+      // With a single slot the tracker stops searching once it follows
+      // something (a bystander's hand, a hand-like pattern), so the player's
+      // hand was ignored. With 2 it keeps searching while it follows one.
+      maxNumHands: MAX_HANDS,
       // Full model (vendor/.../hand_landmark_full.tflite): steadier fingertips and
       // fewer dropouts than lite, at more CPU per frame. Set 0 to go back to lite
       // if a slow laptop starts to lag.
       modelComplexity: 1,
-      // Lower thresholds: finds the hand again sooner in dim/backlit booths and
-      // keeps following it through a pinch instead of re-searching the frame.
       minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.35
+      // Drops a track that no longer looks like a hand sooner. A real hand that
+      // flickers out is found again by the search above within a frame or two.
+      minTrackingConfidence: 0.5
     });
 
     hands.onResults((results) => {
-      // No hand this frame: renderLoop drops it after LOST_HAND_GRACE_MS.
-      if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) return;
+      const vidW = videoEl.videoWidth || 1280;
+      const vidH = videoEl.videoHeight || 720;
+      // No player's hand this frame: renderLoop drops it after LOST_HAND_GRACE_MS.
+      const player = pickPlayerHand(results.multiHandLandmarks || [], vidW, vidH);
+      if (!player) return;
 
-      const lm = results.multiHandLandmarks[0];
+      const lm = player.lm;
       const now = performance.now();
+      // Moved to a different, bigger hand (someone stepped in front): start
+      // fresh instead of carrying a pinch or smoothing across the two hands.
+      if (player.switched) dropHand();
+      lockedWrist = { x: lm[LM_WRIST].x, y: lm[LM_WRIST].y };
       lastHandSeen = now;
 
       const vw = window.innerWidth;
@@ -1056,12 +1097,7 @@
 
       // Measured in camera pixels, relative to palm length, so it works
       // whether the visitor stands close to or far from the camera.
-      const vidW = videoEl.videoWidth || 1280;
-      const vidH = videoEl.videoHeight || 720;
-      const palm = Math.hypot(
-        (lm[LM_WRIST].x - lm[LM_MIDDLE_MCP].x) * vidW,
-        (lm[LM_WRIST].y - lm[LM_MIDDLE_MCP].y) * vidH
-      ) || 1;
+      const palm = player.palm || 1;
       indexRel = trustIndex({
         x: (lm[LM_INDEX_TIP].x - thumbLm.x) * vidW / palm,
         y: (lm[LM_INDEX_TIP].y - thumbLm.y) * vidH / palm
@@ -1115,12 +1151,19 @@
       const median = Math.round(sorted[sorted.length >> 1]);
       window.__tracker.medianMs = median;
       console.info(`Hand tracker (full model): ${median} ms per frame`);
-      if (median > SLOW_FRAME_MS) {
-        usingFullModel = false;
-        window.__tracker.model = "lite";
-        hands.setOptions({ modelComplexity: 0 });
-        statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model lite, laptop ini lebih cepat pakai lite)`;
-      }
+      if (median > SLOW_FRAME_MS) liteWanted = true;
+    }
+
+    // Switching models reloads the tracker, which goes blind for a moment.
+    // Never do that mid-round: wait until the round is not being played.
+    let liteWanted = false;
+    function switchToLiteWhenIdle() {
+      if (!liteWanted || (countdownState !== "idle" && !gameOver)) return;
+      liteWanted = false;
+      usingFullModel = false;
+      window.__tracker.model = "lite";
+      hands.setOptions({ modelComplexity: 0 });
+      statusEl.textContent = `${cameraLabel()} • Pelacak tangan siap (model lite, laptop ini lebih cepat pakai lite)`;
     }
 
     let busy = false;
@@ -1135,6 +1178,7 @@
     async function processFrame() {
       // Hand tracking is the heaviest thing on the page. It is paused while the
       // round is over (win celebration / result card) so the animation stays smooth.
+      switchToLiteWhenIdle();
       if (!busy && !gameOver && videoEl.readyState >= 2) {
         busy = true;
         try {
