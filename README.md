@@ -61,8 +61,10 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
   kalau kursor tangan sudah di atasnya), atau klik / sentuh. Game tidak mulai sendiri walaupun ada tangan terlihat.
 - Muncul hitung mundur **3-2-1-Mulai!**, lalu timer berjalan
   (bawaan `90 detik`; ganti lewat dropdown **Durasi** di bar atas, 30 detik sampai 5 menit, dan pilihannya diingat browser).
-- **Cubit (jempol + telunjuk)** potongan puzzle, geser ke kotaknya di papan tengah.
-  Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
+- **Cubit gaya OK 👌** potongan puzzle (jempol + telunjuk ketemu, **jari tengah, manis, kelingking tetap lurus**),
+  lalu geser ke kotaknya di papan tengah. Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
+  Kalau 3 jari lain ikut mengepal, pelacak gampang salah mengira jari tengah/manis sebagai telunjuk.
+- Lingkaran kursor mengikuti **ujung jempol**, jadi arahkan jempol ke potongan yang mau diambil.
 - **10 detik terakhir**: layar berdenyut merah tiap detik, makin lama makin tebal.
 - **Menang**: confetti, papan berkilau, musik fanfare, lalu kartu "Kamu Menang!". Tunjukkan ke penjaga booth untuk klaim stiker.
 - **Pengunjung berikutnya**: klik **Main Lagi** atau tekan `R`.
@@ -90,6 +92,8 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 ### Setelan yang bisa diubah (di `js/app.js`)
 - Pilihan durasi di dropdown: daftar `<option>` di `#duration-select` (`index.html`). Bawaan: `DEFAULT_DURATION` di `js/app.js`.
 - Kepekaan cubitan: `PINCH_ON` (makin besar = makin gampang ambil) dan `PINCH_OFF` (makin besar = makin susah lepas).
+- Telunjuk salah baca saat potongan dipegang: `INDEX_JUMP` (seberapa jauh lompatan telunjuk dianggap salah baca)
+  dan `INDEX_JUMP_CONFIRM_MS` (berapa lama posisi baru harus bertahan sebelum dipercaya).
 - Mulai merah peringatan: `DANGER_FROM_SECONDS`.
 - Tangan hilang-hilangan: `LOST_HAND_GRACE_MS` (berapa lama kursor bertahan saat tangan sesaat tidak terdeteksi),
   serta `minDetectionConfidence` / `minTrackingConfidence` di `hands.setOptions` (makin kecil = makin gampang terdeteksi,

@@ -35,6 +35,12 @@
   // before the cursor is removed and a held piece is dropped.
   const LOST_HAND_GRACE_MS = 800;
   const GRAB_PADDING = 14;
+  // With the other fingers folded, the model sometimes puts the "index tip"
+  // on the middle or ring finger for a few frames. While a piece is held, an
+  // index tip that leaps more than INDEX_JUMP palm lengths in one frame is
+  // ignored until it stays at its new spot for INDEX_JUMP_CONFIRM_MS.
+  const INDEX_JUMP = 0.45;
+  const INDEX_JUMP_CONFIRM_MS = 200;
 
   const videoEl = document.getElementById("webcam");
   const canvas = document.getElementById("game-canvas");
@@ -71,7 +77,7 @@
     camera: "Menyiapkan kamera...",
     loading: "Memuat pelacak tangan... tunggu sebentar",
     ready: "Siap! Angkat tanganmu ke kamera",
-    hand: "Tangan terdeteksi! Arahkan lingkaran kuning ke Mulai, lalu cubit",
+    hand: "Tangan terdeteksi! Arahkan lingkaran kuning ke Mulai, lalu cubit gaya OK 👌",
     nocam: "Kamera tidak tersedia. Klik Mulai untuk main pakai mouse/sentuh",
     error: "Pelacak tangan bermasalah. Klik Mulai untuk main pakai mouse/sentuh"
   };
@@ -105,6 +111,9 @@
   let smoothedCursor = { x: -100, y: -100, active: false };
   let isPinching = false;
   let openSince = 0;
+  // Index tip relative to the thumb tip, in palm lengths (camera pixels).
+  let indexRel = null;
+  let indexJump = null; // { rel, since }: a leap waiting to be confirmed
   let lastHandSeen = 0;
   let lastRenderTime = performance.now();
 
@@ -810,11 +819,33 @@
     fxCtx.restore();
   }
 
+  // Returns the index tip position (relative to the thumb) to trust this frame.
+  // Only filters while a piece is held, so grabbing stays instant.
+  function trustIndex(raw, now) {
+    const gap = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    if (!isPinching || !indexRel || gap(raw, indexRel) <= INDEX_JUMP) {
+      indexJump = null;
+      return raw;
+    }
+    if (indexJump && gap(raw, indexJump.rel) <= INDEX_JUMP) {
+      if (now - indexJump.since >= INDEX_JUMP_CONFIRM_MS) {
+        indexJump = null;
+        return raw;
+      }
+      indexJump.rel = raw;
+    } else {
+      indexJump = { rel: raw, since: now };
+    }
+    return indexRel;
+  }
+
   function dropHand() {
     fingerTips = null;
     smoothedCursor.active = false;
     filterX.reset();
     filterY.reset();
+    indexRel = null;
+    indexJump = null;
     if (isPinching) {
       isPinching = false;
       if (inputSource === "hand") releaseActivePiece();
@@ -1012,12 +1043,13 @@
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
-      const thumb = landmarkToScreen(lm[LM_THUMB_TIP], vw, vh);
-      const index = landmarkToScreen(lm[LM_INDEX_TIP], vw, vh);
-      fingerTips = { thumb, index };
+      const thumbLm = lm[LM_THUMB_TIP];
+      const thumb = landmarkToScreen(thumbLm, vw, vh);
 
-      cursorTarget.x = filterX.filter((thumb.x + index.x) / 2, now);
-      cursorTarget.y = filterY.filter((thumb.y + index.y) / 2, now);
+      // The cursor follows the thumb tip only. The model rarely mixes up the
+      // thumb, so a misread index finger can no longer drag the cursor away.
+      cursorTarget.x = filterX.filter(thumb.x, now);
+      cursorTarget.y = filterY.filter(thumb.y, now);
       if (!smoothedCursor.active) {
         smoothedCursor = { x: cursorTarget.x, y: cursorTarget.y, active: true };
       }
@@ -1026,9 +1058,21 @@
       // whether the visitor stands close to or far from the camera.
       const vidW = videoEl.videoWidth || 1280;
       const vidH = videoEl.videoHeight || 720;
-      const dist = (a, b) => Math.hypot((a.x - b.x) * vidW, (a.y - b.y) * vidH);
-      const palm = dist(lm[LM_WRIST], lm[LM_MIDDLE_MCP]) || 1;
-      const pinchRatio = dist(lm[LM_THUMB_TIP], lm[LM_INDEX_TIP]) / palm;
+      const palm = Math.hypot(
+        (lm[LM_WRIST].x - lm[LM_MIDDLE_MCP].x) * vidW,
+        (lm[LM_WRIST].y - lm[LM_MIDDLE_MCP].y) * vidH
+      ) || 1;
+      indexRel = trustIndex({
+        x: (lm[LM_INDEX_TIP].x - thumbLm.x) * vidW / palm,
+        y: (lm[LM_INDEX_TIP].y - thumbLm.y) * vidH / palm
+      }, now);
+      const pinchRatio = Math.hypot(indexRel.x, indexRel.y);
+
+      const index = landmarkToScreen({
+        x: thumbLm.x + indexRel.x * palm / vidW,
+        y: thumbLm.y + indexRel.y * palm / vidH
+      }, vw, vh);
+      fingerTips = { thumb, index };
 
       if (!isPinching) {
         if (pinchRatio < PINCH_ON) {
