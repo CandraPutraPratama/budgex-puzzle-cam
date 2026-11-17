@@ -58,7 +58,7 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 
 ## Cara Main
 - **Angkat tangan ke kamera** → muncul hitung mundur **3-2-1-Mulai!**, lalu timer berjalan
-  (`90 detik`, baik mode `4×3` maupun `4×4`). Tanpa kamera, klik layar sekali untuk mulai.
+  (bawaan `90 detik`; ganti lewat dropdown **Durasi** di bar atas, 30 detik sampai 5 menit, dan pilihannya diingat browser). Tanpa kamera, klik layar sekali untuk mulai.
 - **Cubit (jempol + telunjuk)** potongan puzzle, geser ke kotaknya di papan tengah.
   Begitu pas, potongan otomatis terkunci. Mouse / touchscreen juga bisa dipakai.
 - **10 detik terakhir**: layar berdenyut merah tiap detik, makin lama makin tebal.
@@ -67,6 +67,7 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 
 ## Shortcut
 - **`C`**: Ganti kamera (misal ke kamera HP). Tombolnya hanya muncul kalau ada lebih dari 1 kamera.
+- **`T`**: Ganti durasi ke pilihan berikutnya (30 detik → … → 5 menit → balik ke 30 detik).
 - **`G`**: Ganti ukuran grid (`4×3` ↔ `4×4`).
 - **`R`**: Acak ulang / reset game untuk pengunjung berikutnya.
 - **`F11`**: Layar penuh (shortcut browser).
@@ -76,7 +77,7 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 - `serve.py` — Server lokal (tanpa cache)
 - `index.html` — Halaman utama aplikasi kiosk
 - `css/style.css` — Tampilan, animasi hitung mundur, merah peringatan, kartu menang
-- `js/app.js` — Logika game, timer (90 detik), deteksi cubitan tangan, suara & confetti
+- `js/app.js` — Logika game, timer (durasi bisa diganti), deteksi cubitan tangan, suara & confetti
 - `assets/puzzle-mascot.jpg` — Gambar puzzle maskot BudgEx
 - `assets/logo-budgex.png` — Logo BudgEx (pojok kiri atas & ikon tab)
 - `vendor/mediapipe-hands/` — Pelacak tangan MediaPipe Hands v0.4.1675469240 (offline, lisensi Apache-2.0)
@@ -85,6 +86,6 @@ tepat di belakang pengunjung. Sambungan kabel USB lebih stabil daripada Wi-Fi pa
 > Kalau folder game di-copy ke laptop lain, **copy satu folder utuh**, termasuk `vendor/` dan `fonts/`.
 
 ### Setelan yang bisa diubah (di `js/app.js`)
-- Lama waktu: `duration` di `MODES` paling atas.
+- Pilihan durasi di dropdown: daftar `<option>` di `#duration-select` (`index.html`). Bawaan: `DEFAULT_DURATION` di `js/app.js`.
 - Kepekaan cubitan: `PINCH_ON` (makin besar = makin gampang ambil) dan `PINCH_OFF` (makin besar = makin susah lepas).
 - Mulai merah peringatan: `DANGER_FROM_SECONDS`.

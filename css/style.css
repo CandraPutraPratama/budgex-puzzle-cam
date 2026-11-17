@@ -182,6 +182,17 @@ html, body {
   background: rgba(255, 255, 255, 0.18);
 }
 
+/* .btn sets display, which would otherwise override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+/* Dark scheme keeps the opened option list readable on the dark HUD. */
+.duration-select {
+  color-scheme: dark;
+  flex-shrink: 0;
+}
+
 .btn-large {
   width: 100%;
   min-height: 52px;

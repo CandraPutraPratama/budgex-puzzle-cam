@@ -1,8 +1,21 @@
 (() => {
   const MODES = [
-    { cols: 4, rows: 3, duration: 90, label: "4×3 (90d)" },
-    { cols: 4, rows: 4, duration: 90, label: "4×4 (90d)" }
+    { cols: 4, rows: 3, label: "4×3" },
+    { cols: 4, rows: 4, label: "4×4" }
   ];
+
+  // Round length in seconds, picked from the "Durasi" dropdown and remembered
+  // in this browser. Choices live in index.html (#duration-select).
+  const DEFAULT_DURATION = 90;
+  const DURATION_KEY = "budgex-duration";
+  const durationSelect = document.getElementById("duration-select");
+  const durationChoices = [...durationSelect.options].map((o) => Number(o.value));
+  let duration = DEFAULT_DURATION;
+  try {
+    const saved = Number(localStorage.getItem(DURATION_KEY));
+    if (durationChoices.includes(saved)) duration = saved;
+  } catch (_) {}
+  durationSelect.value = String(duration);
 
   // MediaPipe landmark indices. The model always sees the whole hand,
   // but the game only reads the thumb tip, the index tip, and two palm
@@ -56,7 +69,7 @@
   let dragOffset = { x: 0, y: 0 };
   let inputSource = null;
 
-  let timeLeft = MODES[0].duration;
+  let timeLeft = duration;
   let timerStarted = false;
   let gameOver = false;
   let timerInterval = null;
@@ -377,7 +390,7 @@
     winStart = 0;
     modal.classList.remove("is-win");
     const mode = MODES[modeIndex];
-    timeLeft = mode.duration;
+    timeLeft = duration;
     timerStarted = false;
     gameOver = false;
     activePiece = null;
@@ -824,12 +837,33 @@
     initBoard();
   });
 
+  // Changing the length starts a fresh round with the new time.
+  function setDuration(seconds) {
+    duration = seconds;
+    durationSelect.value = String(seconds);
+    try {
+      localStorage.setItem(DURATION_KEY, String(seconds));
+    } catch (_) {}
+    initBoard();
+  }
+
+  durationSelect.addEventListener("change", () => {
+    setDuration(Number(durationSelect.value));
+    // Hand focus back so R / G / T shortcuts don't type into the dropdown.
+    durationSelect.blur();
+  });
+
   btnReset.addEventListener("click", () => initBoard());
   btnPlayAgain.addEventListener("click", () => initBoard());
 
   window.addEventListener("keydown", (e) => {
     getAudio();
+    if (e.target === durationSelect) return;
     if (e.key === "r" || e.key === "R") initBoard();
+    if (e.key === "t" || e.key === "T") {
+      const next = durationChoices[(durationChoices.indexOf(duration) + 1) % durationChoices.length];
+      setDuration(next);
+    }
     if (e.key === "g" || e.key === "G") {
       modeIndex = (modeIndex + 1) % MODES.length;
       initBoard();
